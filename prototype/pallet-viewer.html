@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pallet packing viewer</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f5f4ef;
+    --surface-2: #ebe9e0;
+    --border: rgba(0, 0, 0, 0.12);
+    --border-strong: rgba(0, 0, 0, 0.24);
+    --text: #1f1e1c;
+    --text-muted: #6b6a64;
+    --text-faint: #9a9892;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1916;
+      --surface: #25241f;
+      --surface-2: #2f2e28;
+      --border: rgba(255, 255, 255, 0.12);
+      --border-strong: rgba(255, 255, 255, 0.24);
+      --text: #ebe9e0;
+      --text-muted: #a8a69e;
+      --text-faint: #6b6a64;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .title { font-size: 18px; font-weight: 500; }
+  .subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .controls { display: flex; gap: 8px; }
+  button {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: transparent;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.05s;
+    font-size: 16px;
+  }
+  button:hover { background: var(--surface-2); }
+  button:active { transform: scale(0.96); }
+  .viewport-wrap {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    position: relative;
+  }
+  svg#viewport {
+    width: 100%;
+    height: 440px;
+    display: block;
+    cursor: grab;
+    user-select: none;
+  }
+  svg#viewport.dragging { cursor: grabbing; }
+  .hint {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+  }
+  .swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+  .count { color: var(--text-muted); }
+  .detail {
+    font-size: 13px;
+    color: var(--text-muted);
+    min-height: 18px;
+  }
+  .detail strong { color: var(--text); font-weight: 500; }
+  .rotate-flip { transform: scaleX(-1); display: inline-block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div>
+      <div class="title">Pallet packing solution</div>
+      <div class="subtitle">14 boxes · 4 SKUs · 87% volume utilisation</div>
+    </div>
+    <div class="controls">
+      <button id="rotate-l" aria-label="Rotate left" title="Rotate left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-flip">
+          <path d="M19.95 11a8 8 0 1 0-.5 4m.5 5v-5h-5"/>
+        </svg>
+      </button>
+      <button id="rotate-r" aria-label="Rotate right" title="Rotate right">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19.95 11a8 8 0 1 0-.5 4m.5 5v-5h-5"/>
+        </svg>
+      </button>
+      <button id="reset" aria-label="Reset view" title="Reset view">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="viewport-wrap">
+    <svg id="viewport" viewBox="-340 -260 680 480" role="img" aria-label="Isometric 3D wireframe of pallet packing solution">
+      <g id="scene"></g>
+    </svg>
+    <div class="hint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 13V5a2 2 0 0 1 4 0v6"/>
+        <path d="M12 11V4a2 2 0 0 1 4 0v9"/>
+        <path d="M16 11V6a2 2 0 0 1 4 0v9a6 6 0 0 1-6 6h-2a6 6 0 0 1-5.2-3l-2.3-4a2 2 0 0 1 .8-2.8L7 11"/>
+      </svg>
+      drag to rotate · scroll to zoom
+    </div>
+  </div>
+
+  <div id="legend" class="legend"></div>
+
+  <div id="detail" class="detail">
+    Click a box to inspect. Showing all 14 boxes.
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const skus = [
+    { id: 'A', name: 'SKU-A heavy crate',  ramp: { fill: '#B5D4F4', stroke: '#185FA5' } },
+    { id: 'B', name: 'SKU-B medium box',   ramp: { fill: '#9FE1CB', stroke: '#0F6E56' } },
+    { id: 'C', name: 'SKU-C tall carton',  ramp: { fill: '#F5C4B3', stroke: '#993C1D' } },
+    { id: 'D', name: 'SKU-D small parcel', ramp: { fill: '#FAC775', stroke: '#854F0B' } },
+  ];
+
+  // Boxes: position (x, y, z) and dimensions (w, d, h) in cm.
+  // z is vertical, x along pallet width, y along pallet depth.
+  const boxes = [
+    { x: 0,  y: 0,  z: 0,  w: 50, d: 40, h: 30, sku: 0 },
+    { x: 50, y: 0,  z: 0,  w: 50, d: 40, h: 30, sku: 0 },
+    { x: 0,  y: 40, z: 0,  w: 50, d: 40, h: 30, sku: 0 },
+    { x: 50, y: 40, z: 0,  w: 50, d: 40, h: 30, sku: 0 },
+    { x: 0,  y: 0,  z: 30, w: 35, d: 35, h: 25, sku: 1 },
+    { x: 35, y: 0,  z: 30, w: 35, d: 35, h: 25, sku: 1 },
+    { x: 70, y: 0,  z: 30, w: 30, d: 35, h: 25, sku: 1 },
+    { x: 0,  y: 35, z: 30, w: 35, d: 45, h: 25, sku: 1 },
+    { x: 35, y: 35, z: 30, w: 35, d: 45, h: 25, sku: 1 },
+    { x: 70, y: 35, z: 30, w: 30, d: 45, h: 25, sku: 1 },
+    { x: 0,  y: 0,  z: 55, w: 40, d: 80, h: 35, sku: 2 },
+    { x: 40, y: 0,  z: 55, w: 40, d: 80, h: 35, sku: 2 },
+    { x: 80, y: 0,  z: 55, w: 20, d: 80, h: 20, sku: 3 },
+    { x: 80, y: 0,  z: 75, w: 20, d: 80, h: 15, sku: 3 },
+  ];
+
+  const palletW = 100, palletD = 80, palletH = 8;
+
+  // True isometric: pitch fixed at arctan(1/sqrt(2)) ~= 35.264 degrees.
+  // Only yaw (rotation around vertical axis) is interactive.
+  let yaw = Math.PI / 4;
+  const pitch = Math.atan(1 / Math.sqrt(2));
+  let scale = 2.4;
+  let selected = -1;
+
+  function project(x, y, z) {
+    const cx = x - palletW / 2;
+    const cy = y - palletD / 2;
+    const cz = z;
+    const rx = cx * Math.cos(yaw) - cy * Math.sin(yaw);
+    const ry = cx * Math.sin(yaw) + cy * Math.cos(yaw);
+    const sx = rx * scale;
+    const sy = (ry * Math.sin(pitch) - cz * Math.cos(pitch)) * scale;
+    return { x: sx, y: sy, depth: ry * Math.cos(pitch) + cz * Math.sin(pitch) };
+  }
+
+  function makeBox(b, idx) {
+    const v = [
+      project(b.x,       b.y,       b.z),
+      project(b.x + b.w, b.y,       b.z),
+      project(b.x + b.w, b.y + b.d, b.z),
+      project(b.x,       b.y + b.d, b.z),
+      project(b.x,       b.y,       b.z + b.h),
+      project(b.x + b.w, b.y,       b.z + b.h),
+      project(b.x + b.w, b.y + b.d, b.z + b.h),
+      project(b.x,       b.y + b.d, b.z + b.h),
+    ];
+    const ramp = skus[b.sku].ramp;
+    const isSelected = selected === idx;
+    const isDimmed = selected !== -1 && !isSelected;
+    const fillOpacity = isSelected ? 0.5 : (isDimmed ? 0.06 : 0.18);
+    const strokeOpacity = isDimmed ? 0.25 : 1;
+    const strokeWidth = isSelected ? 1.6 : 1;
+    const depth = v.reduce((s, p) => s + p.depth, 0) / 8;
+
+    const facePts = (idxs) => idxs.map(i => `${v[i].x},${v[i].y}`).join(' ');
+    const top   = facePts([4, 5, 6, 7]);
+    const right = facePts([1, 2, 6, 5]);
+    const front = facePts([0, 1, 5, 4]);
+
+    const edges = [
+      [0,1],[1,2],[2,3],[3,0],
+      [4,5],[5,6],[6,7],[7,4],
+      [0,4],[1,5],[2,6],[3,7],
+    ];
+    const edgeLines = edges.map(([a,c]) =>
+      `<line x1="${v[a].x}" y1="${v[a].y}" x2="${v[c].x}" y2="${v[c].y}" stroke="${ramp.stroke}" stroke-width="${strokeWidth}" stroke-opacity="${strokeOpacity}" stroke-linecap="round"/>`
+    ).join('');
+
+    const svg = `<g class="box" data-idx="${idx}" style="cursor: pointer;">
+      <polygon points="${front}" fill="${ramp.fill}" fill-opacity="${fillOpacity}" stroke="none"/>
+      <polygon points="${right}" fill="${ramp.fill}" fill-opacity="${fillOpacity * 0.75}" stroke="none"/>
+      <polygon points="${top}"   fill="${ramp.fill}" fill-opacity="${fillOpacity * 1.2}" stroke="none"/>
+      ${edgeLines}
+    </g>`;
+    return { svg, depth };
+  }
+
+  function makePallet() {
+    const v = [
+      project(0,       0,       0),
+      project(palletW, 0,       0),
+      project(palletW, palletD, 0),
+      project(0,       palletD, 0),
+      project(0,       0,       -palletH),
+      project(palletW, 0,       -palletH),
+      project(palletW, palletD, -palletH),
+      project(0,       palletD, -palletH),
+    ];
+    const facePts = (idxs) => idxs.map(i => `${v[i].x},${v[i].y}`).join(' ');
+    const top   = facePts([0, 1, 2, 3]);
+    const front = facePts([4, 5, 1, 0]);
+    const right = facePts([5, 6, 2, 1]);
+
+    const slats = [];
+    for (let i = 0; i < 5; i++) {
+      const yOff = (i / 5) * palletD;
+      const a = project(0,       yOff, 0);
+      const b = project(palletW, yOff, 0);
+      slats.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="var(--border-strong)" stroke-width="0.5" stroke-opacity="0.7"/>`);
+    }
+
+    const edges = [
+      [0,1],[1,2],[2,3],[3,0],
+      [4,5],[5,6],[6,7],[7,4],
+      [0,4],[1,5],[2,6],[3,7],
+    ];
+    const edgeLines = edges.map(([a,c]) =>
+      `<line x1="${v[a].x}" y1="${v[a].y}" x2="${v[c].x}" y2="${v[c].y}" stroke="var(--text-muted)" stroke-width="0.75" stroke-opacity="0.6" stroke-linecap="round"/>`
+    ).join('');
+
+    return `<g class="pallet">
+      <polygon points="${top}"   fill="var(--surface-2)" fill-opacity="0.6"/>
+      <polygon points="${front}" fill="var(--surface-2)" fill-opacity="0.45"/>
+      <polygon points="${right}" fill="var(--surface-2)" fill-opacity="0.35"/>
+      ${slats.join('')}
+      ${edgeLines}
+    </g>`;
+  }
+
+  function makeAxes() {
+    const o  = project(-8, -8, 0);
+    const ax = project( 8, -8, 0);
+    const ay = project(-8,  8, 0);
+    const az = project(-8, -8, 16);
+    return `<g class="axes" opacity="0.5">
+      <line x1="${o.x}"  y1="${o.y}"  x2="${ax.x}" y2="${ax.y}" stroke="var(--text-faint)" stroke-width="0.75"/>
+      <line x1="${o.x}"  y1="${o.y}"  x2="${ay.x}" y2="${ay.y}" stroke="var(--text-faint)" stroke-width="0.75"/>
+      <line x1="${o.x}"  y1="${o.y}"  x2="${az.x}" y2="${az.y}" stroke="var(--text-faint)" stroke-width="0.75"/>
+      <text x="${ax.x + 4}" y="${ax.y + 4}" font-size="9" fill="var(--text-faint)">x</text>
+      <text x="${ay.x + 4}" y="${ay.y + 4}" font-size="9" fill="var(--text-faint)">y</text>
+      <text x="${az.x - 4}" y="${az.y - 4}" font-size="9" fill="var(--text-faint)">z</text>
+    </g>`;
+  }
+
+  function render() {
+    const scene = document.getElementById('scene');
+    if (!scene) return;
+    const items = boxes.map((b, i) => makeBox(b, i));
+    items.sort((a, b) => a.depth - b.depth);
+    scene.innerHTML = makePallet() + makeAxes() + items.map(i => i.svg).join('');
+
+    scene.querySelectorAll('.box').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(el.dataset.idx, 10);
+        selected = (selected === idx) ? -1 : idx;
+        render();
+        updateDetail();
+      });
+    });
+  }
+
+  function updateDetail() {
+    const detail = document.getElementById('detail');
+    if (selected === -1) {
+      detail.textContent = `Click a box to inspect. Showing all ${boxes.length} boxes.`;
+    } else {
+      const b = boxes[selected];
+      const s = skus[b.sku];
+      const vol = (b.w * b.d * b.h / 1000).toFixed(1);
+      detail.innerHTML = `<strong>${s.name}</strong> · position (${b.x}, ${b.y}, ${b.z}) cm · ${b.w}×${b.d}×${b.h} cm · ${vol} L`;
+    }
+  }
+
+  function renderLegend() {
+    const legend = document.getElementById('legend');
+    legend.innerHTML = skus.map((s, i) => {
+      const count = boxes.filter(b => b.sku === i).length;
+      return `<div class="legend-item">
+        <span class="swatch" style="background: ${s.ramp.fill}; border: 1px solid ${s.ramp.stroke};"></span>
+        <span>${s.id}</span>
+        <span class="count">· ${count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const svg = document.getElementById('viewport');
+  let dragging = false;
+  let lastX = 0;
+
+  svg.addEventListener('mousedown', (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    svg.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX;
+    lastX = e.clientX;
+    yaw += dx * 0.012;
+    render();
+  });
+  window.addEventListener('mouseup', () => {
+    dragging = false;
+    svg.classList.remove('dragging');
+  });
+
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.92 : 1.08;
+    scale = Math.max(1.2, Math.min(5, scale * delta));
+    render();
+  }, { passive: false });
+
+  let lastTouchX = 0;
+  svg.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) lastTouchX = e.touches[0].clientX;
+  });
+  svg.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1) {
+      const dx = e.touches[0].clientX - lastTouchX;
+      lastTouchX = e.touches[0].clientX;
+      yaw += dx * 0.012;
+      render();
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  svg.addEventListener('click', (e) => {
+    if (e.target === svg || (e.target.tagName === 'polygon' && e.target.parentElement.classList.contains('pallet'))) {
+      selected = -1;
+      render();
+      updateDetail();
+    }
+  });
+
+  document.getElementById('rotate-l').addEventListener('click', () => { yaw -= Math.PI / 12; render(); });
+  document.getElementById('rotate-r').addEventListener('click', () => { yaw += Math.PI / 12; render(); });
+  document.getElementById('reset').addEventListener('click', () => {
+    yaw = Math.PI / 4; scale = 2.4; selected = -1; render(); updateDetail();
+  });
+
+  render();
+  renderLegend();
+})();
+</script>
+</body>
+</html>

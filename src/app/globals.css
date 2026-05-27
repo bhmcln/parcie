@@ -2,25 +2,44 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1f1e1c;
+  --surface: #f5f4ef;
+  --surface-2: #ebe9e0;
+  --border: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.24);
+  --text-muted: #6b6a64;
+  --text-faint: #9a9892;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border-app: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1a1916;
+    --foreground: #ebe9e0;
+    --surface: #25241f;
+    --surface-2: #2f2e28;
+    --border: rgba(255, 255, 255, 0.12);
+    --border-strong: rgba(255, 255, 255, 0.24);
+    --text-muted: #a8a69e;
+    --text-faint: #6b6a64;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
 }
