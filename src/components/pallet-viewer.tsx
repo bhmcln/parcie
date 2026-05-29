@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BOXES, type Box, PALLET, SKUS } from "@/lib/data";
+import { BOXES, type Box, PALLET, SKUS, SOLUTION } from "@/lib/data";
 
 const PALLET_W = PALLET.w;
 const PALLET_D = PALLET.d;
@@ -159,7 +159,7 @@ export default function PalletViewer() {
         <div>
           <div className="text-base font-medium">Pallet packing solution</div>
           <div className="text-xs text-[var(--text-muted)] mt-0.5">
-            {BOXES.length} boxes · {SKUS.length} SKUs · 87% volume utilisation
+            {BOXES.length} boxes · {SKUS.length} SKUs · {Math.round(SOLUTION.utilisation * 100)}% volume utilisation · {SOLUTION.heightCm} cm
           </div>
         </div>
         <div className="flex gap-2">

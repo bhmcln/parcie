@@ -1,0 +1,218 @@
+{
+  "boxes": [
+    {
+      "x": 0,
+      "y": 0,
+      "z": 25,
+      "w": 50,
+      "d": 40,
+      "h": 30,
+      "sku": 0
+    },
+    {
+      "x": 50,
+      "y": 0,
+      "z": 25,
+      "w": 50,
+      "d": 40,
+      "h": 30,
+      "sku": 0
+    },
+    {
+      "x": 0,
+      "y": 40,
+      "z": 35,
+      "w": 50,
+      "d": 40,
+      "h": 30,
+      "sku": 0
+    },
+    {
+      "x": 50,
+      "y": 40,
+      "z": 35,
+      "w": 50,
+      "d": 40,
+      "h": 30,
+      "sku": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 55,
+      "y": 0,
+      "z": 0,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 20,
+      "y": 1,
+      "z": 55,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 55,
+      "y": 0,
+      "z": 55,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 20,
+      "y": 1,
+      "z": 80,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 55,
+      "y": 0,
+      "z": 80,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 20,
+      "y": 40,
+      "z": 0,
+      "w": 80,
+      "d": 40,
+      "h": 35,
+      "sku": 2
+    },
+    {
+      "x": 20,
+      "y": 40,
+      "z": 65,
+      "w": 80,
+      "d": 40,
+      "h": 35,
+      "sku": 2
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 65,
+      "w": 20,
+      "d": 80,
+      "h": 18,
+      "sku": 3
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 83,
+      "w": 20,
+      "d": 80,
+      "h": 18,
+      "sku": 3
+    }
+  ],
+  "heightCm": 105,
+  "utilisation": 0.84,
+  "status": "OPTIMAL",
+  "engine": {
+    "status": "OPTIMAL",
+    "objectiveCm": 105,
+    "bestBoundCm": 105,
+    "gapPct": 0.0,
+    "utilisation": 0.84,
+    "wallTimeS": 1.264,
+    "timeLimitS": 30.0,
+    "workers": 8,
+    "booleans": 706,
+    "branches": 726,
+    "conflicts": 0,
+    "numVars": 803,
+    "numConstraints": 1610,
+    "decisionVars": [
+      {
+        "name": "Position (x, y, z)",
+        "formula": "14 cartons x 3 axes",
+        "count": 42
+      },
+      {
+        "name": "Effective footprint",
+        "formula": "14 x (w, d)",
+        "count": 28
+      },
+      {
+        "name": "Orientation flags",
+        "formula": "14 cartons",
+        "count": 14
+      },
+      {
+        "name": "Floor flags",
+        "formula": "14 cartons",
+        "count": 14
+      },
+      {
+        "name": "Separation literals",
+        "formula": "91 pairs x 6 axes",
+        "count": 546
+      },
+      {
+        "name": "Support literals",
+        "formula": "compatible (i on j)",
+        "count": 158
+      },
+      {
+        "name": "Envelope height",
+        "formula": "objective",
+        "count": 1
+      }
+    ],
+    "constraintGroups": [
+      {
+        "name": "Orientation linking",
+        "kind": "geometric",
+        "count": 62
+      },
+      {
+        "name": "Pallet bounding box",
+        "kind": "geometric",
+        "count": 42
+      },
+      {
+        "name": "Non-overlap (cuboids)",
+        "kind": "geometric",
+        "count": 637
+      },
+      {
+        "name": "Support & stacking",
+        "kind": "stability",
+        "count": 832
+      },
+      {
+        "name": "Envelope height",
+        "kind": "objective",
+        "count": 14
+      },
+      {
+        "name": "Symmetry breaking",
+        "kind": "search",
+        "count": 23
+      }
+    ],
+    "log": "CpSolverResponse summary:\nstatus: OPTIMAL\nobjective: 105\nbest_bound: 105\nintegers: 55\nbooleans: 706\nconflicts: 0\nbranches: 726\npropagations: 9321\ninteger_propagations: 2291\nrestarts: 0\nlp_iterations: 0\nwalltime: 1.26379\nusertime: 1.26379\ndeterministic_time: 8.86311\ngap_integral: 8.60938\nsolution_fingerprint: 0x8e01baf6ceaffec5\n"
+  }
+}
