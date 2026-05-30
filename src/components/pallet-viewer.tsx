@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BOXES, type Box, PALLET, SKUS, SOLUTION } from "@/lib/data";
+import { type Box, PALLET, SKUS } from "@/lib/data";
+import { useSolution } from "@/lib/solution-store";
 
 const PALLET_W = PALLET.w;
 const PALLET_D = PALLET.d;
@@ -54,6 +55,8 @@ const facePts = (v: Projected[], idxs: number[]) =>
   idxs.map((i) => `${v[i].x},${v[i].y}`).join(" ");
 
 export default function PalletViewer() {
+  const { solution } = useSolution();
+  const BOXES = solution.boxes;
   const [yaw, setYaw] = useState(Math.PI / 4);
   const [scale, setScale] = useState(2.4);
   const [selected, setSelected] = useState<number | null>(null);
@@ -72,13 +75,16 @@ export default function PalletViewer() {
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
+  // A fresh solve changes the box set; drop any stale selection.
+  useEffect(() => setSelected(null), [BOXES]);
+
   const sortedBoxes = useMemo(() => {
     return BOXES.map((b, idx) => {
       const v = projectBoxVerts(b, yaw, scale);
       const depth = v.reduce((s, p) => s + p.depth, 0) / 8;
       return { box: b, v, idx, depth };
     }).sort((a, b) => a.depth - b.depth);
-  }, [yaw, scale]);
+  }, [yaw, scale, BOXES]);
 
   const pallet = useMemo(() => {
     const v: Projected[] = [
@@ -159,7 +165,7 @@ export default function PalletViewer() {
         <div>
           <div className="text-base font-medium">Pallet packing solution</div>
           <div className="text-xs text-[var(--text-muted)] mt-0.5">
-            {BOXES.length} boxes · {SKUS.length} SKUs · {Math.round(SOLUTION.utilisation * 100)}% volume utilisation · {SOLUTION.heightCm} cm
+            {BOXES.length} boxes · {SKUS.length} SKUs · {Math.round(solution.utilisation * 100)}% volume utilisation · {solution.heightCm} cm
           </div>
         </div>
         <div className="flex gap-2">

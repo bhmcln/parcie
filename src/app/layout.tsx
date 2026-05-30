@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SolutionProvider } from "@/lib/solution-store";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -55,7 +56,9 @@ export default function RootLayout({
             </div>
           </nav>
         </header>
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <SolutionProvider>{children}</SolutionProvider>
+        </main>
       </body>
     </html>
   );

@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { SKUS } from "@/lib/data";
+import { useSolution } from "@/lib/solution-store";
 
 const objectiveDefaults = [
   { key: "density",     label: "Volume utilisation", weight: 40 },
@@ -31,6 +33,21 @@ export default function ConstraintsPanel() {
   );
   const [rules, setRules] = useState(initialRules);
   const [draft, setDraft] = useState("");
+  const [stability, setStability] = useState(false);
+
+  const router = useRouter();
+  const { solve, solving, error } = useSolution();
+
+  const onSolve = async () => {
+    const result = await solve({
+      stacking: matrix,
+      stability,
+      objectiveWeights: weights,
+      rules,
+      solver: { timeLimitS: 30, workers: 8 },
+    });
+    if (result) router.push("/pallet");
+  };
 
   const total = Object.values(weights).reduce((s, w) => s + w, 0);
 
@@ -49,7 +66,7 @@ export default function ConstraintsPanel() {
       <div>
         <div className="text-base font-medium">Constraints</div>
         <div className="text-xs text-[var(--text-muted)] mt-0.5">
-          Inputs to the engine. Changes regenerate the pallet and route on the next solve.
+          Inputs to the engine. Save &amp; solve regenerates the pallet and engine views.
         </div>
       </div>
 
@@ -160,9 +177,25 @@ export default function ConstraintsPanel() {
             ))}
           </div>
           <div className="text-[11px] text-[var(--text-faint)]">
-            Weights are normalised before solving. Sliding pickability up will trade volume for
-            cleaner aisle ordering.
+            Recorded with the solve, but the model currently optimises a single objective (minimise
+            envelope height). These weights do not steer it yet.
           </div>
+
+          <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={stability}
+              onChange={(e) => setStability(e.target.checked)}
+              className="mt-0.5 accent-[var(--foreground)]"
+            />
+            <span className="text-xs">
+              <span className="font-medium">Settle heavy items low</span>
+              <span className="block text-[11px] text-[var(--text-faint)] mt-0.5">
+                Lexicographic tie-break: among equal-height packings, pick the one with the lowest
+                centre of mass. Never trades height for it. This one is live.
+              </span>
+            </span>
+          </label>
         </div>
 
         <div className="bg-[var(--surface)] rounded-xl p-4 space-y-3">
@@ -253,18 +286,28 @@ export default function ConstraintsPanel() {
           </button>
         </form>
         <div className="text-[11px] text-[var(--text-faint)]">
-          Rules are parsed into CP-SAT terms by the engine. Anything it can&apos;t parse is flagged
-          rather than silently dropped.
+          Recorded with the solve for now. Free-text rules are not yet parsed into CP-SAT terms.
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 pt-2">
         <div className="text-xs text-[var(--text-muted)]">
-          Changes are local in this prototype. Press <span className="font-mono">Re-solve</span> on
-          the engine view to apply.
+          {error ? (
+            <span className="text-[#993C1D]">{error}</span>
+          ) : (
+            <>
+              Stacking compatibility feeds the engine as hard constraints. Solving runs CP-SAT and
+              opens the pallet view. Objective weights and custom rules are recorded but not yet wired
+              to the objective.
+            </>
+          )}
         </div>
-        <button className="h-9 px-4 text-sm rounded-md bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 transition">
-          Save & solve
+        <button
+          onClick={onSolve}
+          disabled={solving}
+          className="h-9 px-4 text-sm rounded-md bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {solving ? "Solving..." : "Save & solve"}
         </button>
       </div>
     </div>
