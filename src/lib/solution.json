@@ -3,16 +3,7 @@
     {
       "x": 0,
       "y": 0,
-      "z": 25,
-      "w": 50,
-      "d": 40,
-      "h": 30,
-      "sku": 0
-    },
-    {
-      "x": 50,
-      "y": 0,
-      "z": 25,
+      "z": 0,
       "w": 50,
       "d": 40,
       "h": 30,
@@ -21,7 +12,16 @@
     {
       "x": 0,
       "y": 40,
-      "z": 35,
+      "z": 0,
+      "w": 50,
+      "d": 40,
+      "h": 30,
+      "sku": 0
+    },
+    {
+      "x": 50,
+      "y": 0,
+      "z": 0,
       "w": 50,
       "d": 40,
       "h": 30,
@@ -30,70 +30,70 @@
     {
       "x": 50,
       "y": 40,
-      "z": 35,
+      "z": 0,
       "w": 50,
       "d": 40,
       "h": 30,
       "sku": 0
     },
     {
+      "x": 3,
+      "y": 45,
+      "z": 30,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 55,
+      "y": 45,
+      "z": 30,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 20,
+      "y": 41,
+      "z": 55,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 55,
+      "y": 41,
+      "z": 55,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 20,
+      "y": 45,
+      "z": 80,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
+      "x": 55,
+      "y": 45,
+      "z": 80,
+      "w": 35,
+      "d": 35,
+      "h": 25,
+      "sku": 1
+    },
+    {
       "x": 0,
-      "y": 0,
-      "z": 0,
-      "w": 35,
-      "d": 35,
-      "h": 25,
-      "sku": 1
-    },
-    {
-      "x": 55,
-      "y": 0,
-      "z": 0,
-      "w": 35,
-      "d": 35,
-      "h": 25,
-      "sku": 1
-    },
-    {
-      "x": 20,
       "y": 1,
-      "z": 55,
-      "w": 35,
-      "d": 35,
-      "h": 25,
-      "sku": 1
-    },
-    {
-      "x": 55,
-      "y": 0,
-      "z": 55,
-      "w": 35,
-      "d": 35,
-      "h": 25,
-      "sku": 1
-    },
-    {
-      "x": 20,
-      "y": 1,
-      "z": 80,
-      "w": 35,
-      "d": 35,
-      "h": 25,
-      "sku": 1
-    },
-    {
-      "x": 55,
-      "y": 0,
-      "z": 80,
-      "w": 35,
-      "d": 35,
-      "h": 25,
-      "sku": 1
-    },
-    {
-      "x": 20,
-      "y": 40,
-      "z": 0,
+      "z": 30,
       "w": 80,
       "d": 40,
       "h": 35,
@@ -101,7 +101,7 @@
     },
     {
       "x": 20,
-      "y": 40,
+      "y": 0,
       "z": 65,
       "w": 80,
       "d": 40,
@@ -132,15 +132,10 @@
   "status": "OPTIMAL",
   "engine": {
     "status": "OPTIMAL",
-    "objectiveCm": 105,
-    "bestBoundCm": 105,
-    "gapPct": 0.0,
-    "utilisation": 0.84,
-    "wallTimeS": 1.264,
     "timeLimitS": 30.0,
     "workers": 8,
     "booleans": 706,
-    "branches": 726,
+    "branches": 932,
     "conflicts": 0,
     "numVars": 803,
     "numConstraints": 1610,
@@ -213,6 +208,13 @@
         "count": 23
       }
     ],
-    "log": "CpSolverResponse summary:\nstatus: OPTIMAL\nobjective: 105\nbest_bound: 105\nintegers: 55\nbooleans: 706\nconflicts: 0\nbranches: 726\npropagations: 9321\ninteger_propagations: 2291\nrestarts: 0\nlp_iterations: 0\nwalltime: 1.26379\nusertime: 1.26379\ndeterministic_time: 8.86311\ngap_integral: 8.60938\nsolution_fingerprint: 0x8e01baf6ceaffec5\n"
+    "log": "CpSolverResponse summary:\nstatus: OPTIMAL\nobjective: 105\nbest_bound: 105\nintegers: 51\nbooleans: 706\nconflicts: 0\nbranches: 932\npropagations: 12176\ninteger_propagations: 2675\nrestarts: 0\nlp_iterations: 0\nwalltime: 0.824949\nusertime: 0.824949\ndeterministic_time: 4.2948\ngap_integral: 4.90262\nsolution_fingerprint: 0x5ae5881695c77642\n",
+    "objectiveCm": 105,
+    "bestBoundCm": 105,
+    "gapPct": 0.0,
+    "utilisation": 0.84,
+    "wallTimeS": 0.825,
+    "stabilityApplied": false,
+    "comZcm": 38.9
   }
 }

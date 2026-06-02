@@ -39,20 +39,37 @@ class PackingVars:
     height: cp_model.IntVar  # stack envelope height, the objective
 
 
+def _allowed_matrix(skus: list[Sku], allowed: list[list[bool]] | None) -> list[list[bool]]:
+    """
+    Resolve the stacking-compatibility matrix. When no override is given, derive
+    it from `can_stack` so the weight rule still applies. The model and
+    `model_dimensions` must see the same matrix, hence one resolver.
+    """
+    if allowed is not None:
+        return allowed
+    n = len(skus)
+    return [[can_stack(top, bottom) for bottom in range(n)] for top in range(n)]
+
+
 def build_model(
     cartons: list[Carton],
     pallet: Pallet,
     skus: list[Sku],
+    allowed: list[list[bool]] | None = None,
 ) -> tuple[cp_model.CpModel, PackingVars]:
     """
     Build the full packing model: orientation, pallet bounding box, pairwise
     3D non-overlap, support (no floating cartons), and stacking compatibility.
     Objective minimises the stack envelope height, which maximises volume
     utilisation for a fixed set of cartons.
+
+    `allowed[top][bottom]` gates whether a carton of SKU `top` may rest on SKU
+    `bottom`. When omitted it is derived from `can_stack` (the weight rule).
     """
     model = cp_model.CpModel()
     n = len(cartons)
     W, D, Hmax = pallet.width, pallet.depth, pallet.max_height
+    allowed = _allowed_matrix(skus, allowed)
 
     x = [model.new_int_var(0, W, f"x{i}") for i in range(n)]
     y = [model.new_int_var(0, D, f"y{i}") for i in range(n)]
@@ -113,18 +130,21 @@ def build_model(
                 continue
             # Stacking compatibility is a hard gate: if SKU i cannot rest on
             # SKU j, the support literal never exists, so it cannot be chosen.
-            if not can_stack(cartons[i].sku, cartons[j].sku):
+            if not allowed[cartons[i].sku][cartons[j].sku]:
                 continue
 
             r = model.new_bool_var(f"rest_{i}_on_{j}")
             rests_on[(i, j)] = r
             # Bottom of i flush with top of j.
             model.add(z[i] == z[j] + h[j]).only_enforce_if(r)
-            # Footprints must overlap by at least 1 cm in both x and y.
-            model.add(x[i] <= x[j] + w[j] - 1).only_enforce_if(r)
-            model.add(x[j] <= x[i] + w[i] - 1).only_enforce_if(r)
-            model.add(y[i] <= y[j] + d[j] - 1).only_enforce_if(r)
-            model.add(y[j] <= y[i] + d[i] - 1).only_enforce_if(r)
+            # i's footprint centre must sit strictly inside j's footprint, so i
+            # cannot rest on a sliver of j and cantilever the rest into the air.
+            # Centres are doubled to stay integer (2*centre_x = 2*x + w); the
+            # +1 / -1 make the containment strict.
+            model.add(2 * x[i] + w[i] >= 2 * x[j] + 1).only_enforce_if(r)
+            model.add(2 * x[i] + w[i] <= 2 * x[j] + 2 * w[j] - 1).only_enforce_if(r)
+            model.add(2 * y[i] + d[i] >= 2 * y[j] + 1).only_enforce_if(r)
+            model.add(2 * y[i] + d[i] <= 2 * y[j] + 2 * d[j] - 1).only_enforce_if(r)
             supporters.append(r)
 
         # If not on the floor, at least one supporter must hold it up.
@@ -167,20 +187,28 @@ def build_model(
     )
 
 
-def model_dimensions(cartons: list[Carton]) -> tuple[list[dict], list[dict]]:
+def model_dimensions(
+    cartons: list[Carton],
+    skus: list[Sku],
+    allowed: list[list[bool]] | None = None,
+) -> tuple[list[dict], list[dict]]:
     """
     Analytic breakdown of the decision variables and constraints `build_model`
     creates, grouped for display. Counts are derived from the same structure
     the model uses; `test_model_dimensions_match_proto` asserts the totals
     equal the built model's proto, so this cannot silently drift.
+
+    Pass the same `allowed` matrix as `build_model`: the support-literal count
+    depends on which SKU pairs may stack.
     """
+    allowed = _allowed_matrix(skus, allowed)
     n = len(cartons)
     pairs = n * (n - 1) // 2
     supports = sum(
         1
         for i in range(n)
         for j in range(n)
-        if i != j and can_stack(cartons[i].sku, cartons[j].sku)
+        if i != j and allowed[cartons[i].sku][cartons[j].sku]
     )
     squares = sum(1 for c in cartons if c.w == c.d)
     twins = sum(
@@ -210,6 +238,39 @@ def model_dimensions(cartons: list[Carton]) -> tuple[list[dict], list[dict]]:
     ]
 
     return decision_vars, constraint_groups
+
+
+def stability_objective(
+    cartons: list[Carton],
+    skus: list[Sku],
+    pv: PackingVars,
+):
+    """
+    The load's vertical centre of mass, as a linear expression to minimise.
+
+    Each carton contributes its weight times twice its centre height,
+    `weight * (2*z + h)`. The factor of two keeps the coefficient integer when a
+    carton height is odd (CP-SAT needs integer coefficients), and weight is
+    scaled to tenths of a kilogram for the same reason. Minimising the sum
+    settles heavy cartons low, which lowers the load's vertical centre of mass.
+    """
+    terms = []
+    for i, c in enumerate(cartons):
+        weight_tenths = round(skus[c.sku].weight_kg * 10)
+        terms.append(weight_tenths * (2 * pv.z[i] + pv.h[i]))
+    return sum(terms)
+
+
+def vertical_com_cm(boxes: list["PlacedBox"], skus: list[Sku]) -> float:
+    """
+    The realised vertical centre of mass of a solved pack, in cm above the deck.
+    Reported alongside the solve so the stability tie-break's effect is visible.
+    """
+    total_weight = sum(skus[b.sku].weight_kg for b in boxes)
+    if total_weight <= 0:
+        return 0.0
+    moment = sum(skus[b.sku].weight_kg * (b.z + b.h / 2) for b in boxes)
+    return moment / total_weight
 
 
 @dataclass
